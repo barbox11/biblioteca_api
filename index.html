@@ -4,15 +4,16 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Librería Online</title>
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
     <div class="container">
         <h1>Catálogo de Libros 📚</h1>
 
         <div class="form-container">
-            <h2>Agregar Nuevo Libro</h2>
+            <h2 id="form-title">Agregar Nuevo Libro</h2>
             <form id="libro-form">
+                <input type="hidden" id="libro-id">
                 <div class="form-group">
                     <label for="titulo">Título:</label>
                     <input type="text" id="titulo" name="titulo" required>
@@ -33,7 +34,10 @@
                     <label for="stock">Stock:</label>
                     <input type="number" id="stock" name="stock" required>
                 </div>
-                <button type="submit" class="btn-submit">Agregar Libro</button>
+                <div class="form-buttons">
+                    <button type="submit" class="btn-submit">Agregar Libro</button>
+                    <button type="button" id="btn-cancelar" class="btn-cancelar" style="display: none;">Cancelar</button>
+                </div>
             </form>
         </div>
 
@@ -43,6 +47,7 @@
     </div>
 
     <script>
+        // Cargar libros
         function cargarLibros() {
             fetch("http://localhost/libreria_api/Api.php")
                 .then(response => {
@@ -61,6 +66,7 @@
                             card.innerHTML = `
                                 <div class="libro-header">
                                     <h3>${libro.titulo}</h3>
+                                    <button class="btn-editar" onclick="editarLibro(${libro.id})">✏️ Editar</button>
                                 </div>
                                 <div class="libro-body">
                                     <p class="libro-info">Autor: ${libro.autor}</p>
@@ -79,8 +85,40 @@
                 });
         }
 
+        // Editar libro
+        function editarLibro(id) {
+            fetch(`http://localhost/libreria_api/Api.php?id=${id}`)
+                .then(response => response.json())
+                .then(response => {
+                    if(response.status === "success") {
+                        const libro = response.data.find(l => l.id === id);
+                        if(libro) {
+                            document.getElementById("libro-id").value = libro.id;
+                            document.getElementById("titulo").value = libro.titulo;
+                            document.getElementById("autor").value = libro.autor;
+                            document.getElementById("genero").value = libro.genero;
+                            document.getElementById("precio").value = libro.precio;
+                            document.getElementById("stock").value = libro.stock;
+
+                            document.getElementById("form-title").textContent = "Editar Libro";
+                            document.querySelector(".btn-submit").textContent = "Actualizar";
+                            document.getElementById("btn-cancelar").style.display = "inline-block";
+                            
+                            // Scroll al formulario
+                            document.querySelector('.form-container').scrollIntoView({ 
+                                behavior: 'smooth' 
+                            });
+                        }
+                    }
+                });
+        }
+
+        // Manejar envío del formulario
         document.getElementById("libro-form").addEventListener("submit", function(e) {
             e.preventDefault();
+            
+            const libroId = document.getElementById("libro-id").value;
+            const method = libroId ? "PUT" : "POST";
             
             const formData = {
                 titulo: document.getElementById("titulo").value,
@@ -90,8 +128,10 @@
                 stock: parseInt(document.getElementById("stock").value)
             };
 
+            if(libroId) formData.id = parseInt(libroId);
+
             fetch("http://localhost/libreria_api/Api.php", {
-                method: "POST",
+                method: method,
                 headers: {
                     "Content-Type": "application/json"
                 },
@@ -101,11 +141,11 @@
             .then(data => {
                 if(data.status === "success") {
                     document.getElementById("mensaje").innerHTML = 
-                        '<div class="success">Libro agregado correctamente</div>';
-                    this.reset();
+                        `<div class="success">${data.message}</div>`;
+                    resetearFormulario();
                     cargarLibros();
                 } else {
-                    throw new Error(data.message || 'Error al agregar el libro');
+                    throw new Error(data.message || 'Error en la operación');
                 }
             })
             .catch(error => {
@@ -114,6 +154,18 @@
             });
         });
 
+        // Cancelar edición
+        document.getElementById("btn-cancelar").addEventListener("click", resetearFormulario);
+
+        function resetearFormulario() {
+            document.getElementById("libro-form").reset();
+            document.getElementById("libro-id").value = "";
+            document.getElementById("form-title").textContent = "Agregar Nuevo Libro";
+            document.querySelector(".btn-submit").textContent = "Agregar Libro";
+            document.getElementById("btn-cancelar").style.display = "none";
+        }
+
+        // Cargar libros al iniciar
         cargarLibros();
     </script>
 </body>

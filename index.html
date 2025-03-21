@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Librería Online</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Catálogo de Libros 📚</h1>
+
+        <div class="form-container">
+            <h2>Agregar Nuevo Libro</h2>
+            <form id="libro-form">
+                <div class="form-group">
+                    <label for="titulo">Título:</label>
+                    <input type="text" id="titulo" name="titulo" required>
+                </div>
+                <div class="form-group">
+                    <label for="autor">Autor:</label>
+                    <input type="text" id="autor" name="autor" required>
+                </div>
+                <div class="form-group">
+                    <label for="genero">Género:</label>
+                    <input type="text" id="genero" name="genero" required>
+                </div>
+                <div class="form-group">
+                    <label for="precio">Precio:</label>
+                    <input type="number" id="precio" name="precio" step="0.01" required>
+                </div>
+                <div class="form-group">
+                    <label for="stock">Stock:</label>
+                    <input type="number" id="stock" name="stock" required>
+                </div>
+                <button type="submit" class="btn-submit">Agregar Libro</button>
+            </form>
+        </div>
+
+        <h2>Libros Disponibles</h2>
+        <div id="mensaje" class="mensaje"></div>
+        <ul id="libros-lista" class="libros-lista"></ul>
+    </div>
+
+    <script>
+        function cargarLibros() {
+            fetch("http://localhost/libreria_api/Api.php")
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Error en la respuesta del servidor');
+                    }
+                    return response.json();
+                })
+                .then(response => {
+                    if(response.status === "success" && response.data) {
+                        const lista = document.getElementById("libros-lista");
+                        lista.innerHTML = "";
+                        response.data.forEach(libro => {
+                            const item = document.createElement("li");
+                            item.className = "libro-item";
+                            item.innerHTML = `
+                                <strong>${libro.titulo}</strong><br>
+                                Autor: ${libro.autor}<br>
+                                Género: ${libro.genero}<br>
+                                Precio: $${libro.precio}<br>
+                                Stock: ${libro.stock} unidades
+                            `;
+                            lista.appendChild(item);
+                        });
+                    }
+                })
+                .catch(error => {
+                    document.getElementById("mensaje").innerHTML = 
+                        `<div class="error">Error al cargar los libros: ${error.message}</div>`;
+                });
+        }
+
+        document.getElementById("libro-form").addEventListener("submit", function(e) {
+            e.preventDefault();
+            
+            const formData = {
+                titulo: document.getElementById("titulo").value,
+                autor: document.getElementById("autor").value,
+                genero: document.getElementById("genero").value,
+                precio: parseFloat(document.getElementById("precio").value),
+                stock: parseInt(document.getElementById("stock").value)
+            };
+
+            fetch("http://localhost/libreria_api/Api.php", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(formData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if(data.status === "success") {
+                    document.getElementById("mensaje").innerHTML = 
+                        '<div class="success">Libro agregado correctamente</div>';
+                    this.reset();
+                    cargarLibros();
+                } else {
+                    throw new Error(data.message || 'Error al agregar el libro');
+                }
+            })
+            .catch(error => {
+                document.getElementById("mensaje").innerHTML = 
+                    `<div class="error">Error: ${error.message}</div>`;
+            });
+        });
+
+        cargarLibros();
+    </script>
+</body>
+</html>

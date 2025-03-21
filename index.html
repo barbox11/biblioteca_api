@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Librería Online</title>
-    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div class="container">
@@ -39,7 +39,7 @@
 
         <h2>Libros Disponibles</h2>
         <div id="mensaje" class="mensaje"></div>
-        <ul id="libros-lista" class="libros-lista"></ul>
+        <div id="libros-lista" class="libros-lista"></div>
     </div>
 
     <script>
@@ -56,16 +56,20 @@
                         const lista = document.getElementById("libros-lista");
                         lista.innerHTML = "";
                         response.data.forEach(libro => {
-                            const item = document.createElement("li");
-                            item.className = "libro-item";
-                            item.innerHTML = `
-                                <strong>${libro.titulo}</strong><br>
-                                Autor: ${libro.autor}<br>
-                                Género: ${libro.genero}<br>
-                                Precio: $${libro.precio}<br>
-                                Stock: ${libro.stock} unidades
+                            const card = document.createElement("div");
+                            card.className = "libro-card";
+                            card.innerHTML = `
+                                <div class="libro-header">
+                                    <h3>${libro.titulo}</h3>
+                                </div>
+                                <div class="libro-body">
+                                    <p class="libro-info">Autor: ${libro.autor}</p>
+                                    <p class="libro-info">Género: ${libro.genero}</p>
+                                    <p class="precio">$${libro.precio}</p>
+                                    <p class="stock">Stock: ${libro.stock} unidades</p>
+                                </div>
                             `;
-                            lista.appendChild(item);
+                            lista.appendChild(card);
                         });
                     }
                 })

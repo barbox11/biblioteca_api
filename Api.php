@@ -11,7 +11,7 @@ try {
     $conn = $database->connect();
 
     if ($_SERVER["REQUEST_METHOD"] == "GET") {
-        $sql = "SELECT * FROM libros";
+        $sql = "SELECT * FROM libros ORDER BY id DESC";
         $stmt = $conn->prepare($sql);
         $stmt->execute();
         $result = $stmt->get_result();

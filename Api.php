@@ -1,7 +1,7 @@
 <?php
 header("Content-Type: application/json; charset=UTF-8");
 header("Access-Control-Allow-Origin: *");
-header("Access-Control-Allow-Methods: GET, POST, PUT");
+header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE");
 header("Access-Control-Allow-Headers: Content-Type");
 
 require_once "bd.php";
@@ -83,6 +83,28 @@ try {
             ]);
         } else {
             throw new Exception("Error al actualizar el libro");
+        }
+    }
+
+    // DELETE - Eliminar libro
+    elseif ($_SERVER["REQUEST_METHOD"] == "DELETE") {
+        $id = isset($_GET['id']) ? $_GET['id'] : null;
+        
+        if (!$id) {
+            throw new Exception("ID del libro no proporcionado");
+        }
+
+        $sql = "DELETE FROM libros WHERE id = ?";
+        $stmt = $conn->prepare($sql);
+        $stmt->bind_param("i", $id);
+
+        if ($stmt->execute()) {
+            echo json_encode([
+                "status" => "success",
+                "message" => "Libro eliminado correctamente"
+            ]);
+        } else {
+            throw new Exception("Error al eliminar el libro");
         }
     }
 

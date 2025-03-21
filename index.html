@@ -66,7 +66,10 @@
                             card.innerHTML = `
                                 <div class="libro-header">
                                     <h3>${libro.titulo}</h3>
-                                    <button class="btn-editar" onclick="editarLibro(${libro.id})">✏️ Editar</button>
+                                    <div class="acciones">
+                                        <button class="btn-editar" onclick="editarLibro(${libro.id})">Editar</button>
+                                        <button class="btn-eliminar" onclick="eliminarLibro(${libro.id})">Eliminar</button>
+                                    </div>
                                 </div>
                                 <div class="libro-body">
                                     <p class="libro-info">Autor: ${libro.autor}</p>
@@ -104,13 +107,35 @@
                             document.querySelector(".btn-submit").textContent = "Actualizar";
                             document.getElementById("btn-cancelar").style.display = "inline-block";
                             
-                            // Scroll al formulario
                             document.querySelector('.form-container').scrollIntoView({ 
                                 behavior: 'smooth' 
                             });
                         }
                     }
                 });
+        }
+
+        // Eliminar libro
+        function eliminarLibro(id) {
+            if (confirm('¿Estás seguro de que deseas eliminar este libro?')) {
+                fetch(`http://localhost/libreria_api/Api.php?id=${id}`, {
+                    method: 'DELETE'
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === "success") {
+                        document.getElementById("mensaje").innerHTML = 
+                            `<div class="success">${data.message}</div>`;
+                        cargarLibros();
+                    } else {
+                        throw new Error(data.message || 'Error al eliminar el libro');
+                    }
+                })
+                .catch(error => {
+                    document.getElementById("mensaje").innerHTML = 
+                        `<div class="error">Error: ${error.message}</div>`;
+                });
+            }
         }
 
         // Manejar envío del formulario

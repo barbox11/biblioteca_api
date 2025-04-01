@@ -108,6 +108,35 @@
         function mostrarLibros(libros) {
             const lista = document.getElementById("libros-lista");
             lista.innerHTML = "";
+            function mostrarLibros(libros) {
+    const lista = document.getElementById("libros-lista");
+    lista.innerHTML = "";
+    
+    if (libros.length === 0) {
+        
+        lista.innerHTML = `
+            <div class="no-resultados">
+                <div class="mensaje-no-resultados">
+                    <span class="icono">📚</span>
+                    <p>No se encontraron libros con las especificaciones seleccionadas</p>
+                    <button class="btn-reset-filtros" onclick="resetearFiltros()">Resetear filtros</button>
+                </div>
+            </div>
+        `;
+    } else {
+        // Mostrar los libros si existen resultados
+        libros.forEach(libro => {
+            // ...existing code...
+        });
+    }
+}
+
+// Agregar función para resetear filtros
+function resetearFiltros() {
+    document.getElementById('filtro-genero').value = '';
+    document.getElementById('filtro-anio').value = '';
+    mostrarLibros(todosLosLibros);
+}
             
             libros.forEach(libro => {
                 const card = document.createElement("div");

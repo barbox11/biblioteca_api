@@ -10,7 +10,6 @@ try {
     $database = new Database();
     $conn = $database->connect();
 
-    // GET - Obtener todos los libros
     if ($_SERVER["REQUEST_METHOD"] == "GET") {
         $sql = "SELECT * FROM libros ORDER BY id DESC";
         $stmt = $conn->prepare($sql);
@@ -28,7 +27,6 @@ try {
         ]);
     }
 
-    // POST - Agregar nuevo libro
     elseif ($_SERVER["REQUEST_METHOD"] == "POST") {
         $data = json_decode(file_get_contents("php://input"), true);
         
@@ -36,12 +34,14 @@ try {
             throw new Exception("Faltan datos requeridos");
         }
 
-        $sql = "INSERT INTO libros (titulo, autor, genero, precio, stock) VALUES (?, ?, ?, ?, ?)";
+        $sql = "INSERT INTO libros (titulo, autor, genero, fecha_publicacion, precio, stock) 
+                VALUES (?, ?, ?, ?, ?, ?)";
         $stmt = $conn->prepare($sql);
-        $stmt->bind_param("sssdd", 
+        $stmt->bind_param("ssssdd", 
             $data["titulo"],
             $data["autor"],
             $data["genero"],
+            $data["fecha_publicacion"],
             $data["precio"],
             $data["stock"]
         );
@@ -57,20 +57,21 @@ try {
         }
     }
 
-    // PUT - Actualizar libro existente
     elseif ($_SERVER["REQUEST_METHOD"] == "PUT") {
         $data = json_decode(file_get_contents("php://input"), true);
         
-        if (!isset($data["id"]) || !isset($data["titulo"]) || !isset($data["autor"])) {
-            throw new Exception("Faltan datos requeridos");
+        if (!isset($data["id"])) {
+            throw new Exception("ID del libro no proporcionado");
         }
 
-        $sql = "UPDATE libros SET titulo = ?, autor = ?, genero = ?, precio = ?, stock = ? WHERE id = ?";
+        $sql = "UPDATE libros SET titulo = ?, autor = ?, genero = ?, fecha_publicacion = ?, 
+                precio = ?, stock = ? WHERE id = ?";
         $stmt = $conn->prepare($sql);
-        $stmt->bind_param("sssddi", 
+        $stmt->bind_param("ssssddi", 
             $data["titulo"],
             $data["autor"],
             $data["genero"],
+            $data["fecha_publicacion"],
             $data["precio"],
             $data["stock"],
             $data["id"]
@@ -86,7 +87,6 @@ try {
         }
     }
 
-    // DELETE - Eliminar libro
     elseif ($_SERVER["REQUEST_METHOD"] == "DELETE") {
         $id = isset($_GET['id']) ? $_GET['id'] : null;
         
@@ -119,4 +119,3 @@ try {
         $database->close();
     }
 }
-?>

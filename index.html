@@ -27,6 +27,10 @@
                     <input type="text" id="genero" name="genero" required>
                 </div>
                 <div class="form-group">
+                    <label for="fecha">Fecha de Publicación:</label>
+                    <input type="date" id="fecha" name="fecha" required>
+                </div>
+                <div class="form-group">
                     <label for="precio">Precio:</label>
                     <input type="number" id="precio" name="precio" step="0.01" required>
                 </div>
@@ -42,44 +46,41 @@
         </div>
 
         <h2>Libros Disponibles</h2>
+        
+        <!-- Filtros -->
+        <div class="filtros-container">
+            <div class="filtro-grupo">
+                <label for="filtro-genero">Filtrar por Género:</label>
+                <select id="filtro-genero">
+                    <option value="">Todos los géneros</option>
+                </select>
+            </div>
+            <div class="filtro-grupo">
+                <label for="filtro-anio">Filtrar por Año:</label>
+                <select id="filtro-anio">
+                    <option value="">Todos los años</option>
+                </select>
+            </div>
+        </div>
+
         <div id="mensaje" class="mensaje"></div>
         <div id="libros-lista" class="libros-lista"></div>
     </div>
 
     <script>
-        // Cargar libros
+        let todosLosLibros = [];
+
         function cargarLibros() {
             fetch("http://localhost/libreria_api/Api.php")
                 .then(response => {
-                    if (!response.ok) {
-                        throw new Error('Error en la respuesta del servidor');
-                    }
+                    if (!response.ok) throw new Error('Error en la respuesta del servidor');
                     return response.json();
                 })
                 .then(response => {
                     if(response.status === "success" && response.data) {
-                        const lista = document.getElementById("libros-lista");
-                        lista.innerHTML = "";
-                        response.data.forEach(libro => {
-                            const card = document.createElement("div");
-                            card.className = "libro-card";
-                            card.innerHTML = `
-                                <div class="libro-header">
-                                    <h3>${libro.titulo}</h3>
-                                    <div class="acciones">
-                                        <button class="btn-editar" onclick="editarLibro(${libro.id})">Editar</button>
-                                        <button class="btn-eliminar" onclick="eliminarLibro(${libro.id})">Eliminar</button>
-                                    </div>
-                                </div>
-                                <div class="libro-body">
-                                    <p class="libro-info">Autor: ${libro.autor}</p>
-                                    <p class="libro-info">Género: ${libro.genero}</p>
-                                    <p class="precio">$${libro.precio}</p>
-                                    <p class="stock">Stock: ${libro.stock} unidades</p>
-                                </div>
-                            `;
-                            lista.appendChild(card);
-                        });
+                        todosLosLibros = response.data;
+                        actualizarFiltros(todosLosLibros);
+                        mostrarLibros(todosLosLibros);
                     }
                 })
                 .catch(error => {
@@ -88,34 +89,70 @@
                 });
         }
 
-        // Editar libro
-        function editarLibro(id) {
-            fetch(`http://localhost/libreria_api/Api.php?id=${id}`)
-                .then(response => response.json())
-                .then(response => {
-                    if(response.status === "success") {
-                        const libro = response.data.find(l => l.id === id);
-                        if(libro) {
-                            document.getElementById("libro-id").value = libro.id;
-                            document.getElementById("titulo").value = libro.titulo;
-                            document.getElementById("autor").value = libro.autor;
-                            document.getElementById("genero").value = libro.genero;
-                            document.getElementById("precio").value = libro.precio;
-                            document.getElementById("stock").value = libro.stock;
+        function actualizarFiltros(libros) {
+            const generos = [...new Set(libros.map(libro => libro.genero))];
+            const selectGenero = document.getElementById('filtro-genero');
+            selectGenero.innerHTML = '<option value="">Todos los géneros</option>';
+            generos.forEach(genero => {
+                selectGenero.innerHTML += `<option value="${genero}">${genero}</option>`;
+            });
 
-                            document.getElementById("form-title").textContent = "Editar Libro";
-                            document.querySelector(".btn-submit").textContent = "Actualizar";
-                            document.getElementById("btn-cancelar").style.display = "inline-block";
-                            
-                            document.querySelector('.form-container').scrollIntoView({ 
-                                behavior: 'smooth' 
-                            });
-                        }
-                    }
-                });
+            const anios = [...new Set(libros.map(libro => new Date(libro.fecha_publicacion).getFullYear()))];
+            const selectAnio = document.getElementById('filtro-anio');
+            selectAnio.innerHTML = '<option value="">Todos los años</option>';
+            anios.sort((a, b) => b - a).forEach(anio => {
+                selectAnio.innerHTML += `<option value="${anio}">${anio}</option>`;
+            });
         }
 
-        // Eliminar libro
+        function mostrarLibros(libros) {
+            const lista = document.getElementById("libros-lista");
+            lista.innerHTML = "";
+            
+            libros.forEach(libro => {
+                const card = document.createElement("div");
+                card.className = "libro-card";
+                card.innerHTML = `
+                    <div class="libro-header">
+                        <h3>${libro.titulo}</h3>
+                        <div class="acciones">
+                            <button class="btn-editar" onclick="editarLibro(${libro.id})">Editar</button>
+                            <button class="btn-eliminar" onclick="eliminarLibro(${libro.id})">Eliminar</button>
+                        </div>
+                    </div>
+                    <div class="libro-body">
+                        <p class="libro-info">Autor: ${libro.autor}</p>
+                        <p class="libro-info">Género: ${libro.genero}</p>
+                        <p class="libro-info">Año: ${new Date(libro.fecha_publicacion).getFullYear()}</p>
+                        <p class="precio">$${libro.precio}</p>
+                        <p class="stock">Stock: ${libro.stock} unidades</p>
+                    </div>
+                `;
+                lista.appendChild(card);
+            });
+        }
+
+        function editarLibro(id) {
+            const libro = todosLosLibros.find(l => l.id === id);
+            if(libro) {
+                document.getElementById("libro-id").value = libro.id;
+                document.getElementById("titulo").value = libro.titulo;
+                document.getElementById("autor").value = libro.autor;
+                document.getElementById("genero").value = libro.genero;
+                document.getElementById("fecha").value = libro.fecha_publicacion;
+                document.getElementById("precio").value = libro.precio;
+                document.getElementById("stock").value = libro.stock;
+
+                document.getElementById("form-title").textContent = "Editar Libro";
+                document.querySelector(".btn-submit").textContent = "Actualizar";
+                document.getElementById("btn-cancelar").style.display = "inline-block";
+                
+                document.querySelector('.form-container').scrollIntoView({ 
+                    behavior: 'smooth' 
+                });
+            }
+        }
+
         function eliminarLibro(id) {
             if (confirm('¿Estás seguro de que deseas eliminar este libro?')) {
                 fetch(`http://localhost/libreria_api/Api.php?id=${id}`, {
@@ -138,7 +175,6 @@
             }
         }
 
-        // Manejar envío del formulario
         document.getElementById("libro-form").addEventListener("submit", function(e) {
             e.preventDefault();
             
@@ -149,6 +185,7 @@
                 titulo: document.getElementById("titulo").value,
                 autor: document.getElementById("autor").value,
                 genero: document.getElementById("genero").value,
+                fecha_publicacion: document.getElementById("fecha").value,
                 precio: parseFloat(document.getElementById("precio").value),
                 stock: parseInt(document.getElementById("stock").value)
             };
@@ -179,8 +216,33 @@
             });
         });
 
-        // Cancelar edición
         document.getElementById("btn-cancelar").addEventListener("click", resetearFormulario);
+        document.getElementById('filtro-genero').addEventListener('change', aplicarFiltros);
+        document.getElementById('filtro-anio').addEventListener('change', aplicarFiltros);
+
+        
+        //aplicar filtros
+        
+        function aplicarFiltros() {
+            const generoSeleccionado = document.getElementById('filtro-genero').value;
+            const anioSeleccionado = document.getElementById('filtro-anio').value;
+
+            let librosFiltrados = todosLosLibros;
+
+            if (generoSeleccionado) {
+                librosFiltrados = librosFiltrados.filter(libro => 
+                    libro.genero === generoSeleccionado
+                );
+            }
+
+            if (anioSeleccionado) {
+                librosFiltrados = librosFiltrados.filter(libro => 
+                    new Date(libro.fecha_publicacion).getFullYear() === parseInt(anioSeleccionado)
+                );
+            }
+
+            mostrarLibros(librosFiltrados);
+        }
 
         function resetearFormulario() {
             document.getElementById("libro-form").reset();
@@ -190,7 +252,6 @@
             document.getElementById("btn-cancelar").style.display = "none";
         }
 
-        // Cargar libros al iniciar
         cargarLibros();
     </script>
 </body>
